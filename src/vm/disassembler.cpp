@@ -70,7 +70,6 @@ bool Disassembler::IsAvailable()
 #endif // USE_COREDISTOOLS_DISASSEMBLER
 }
 
-// static
 void Disassembler::StaticInitialize()
 {
     LIMITED_METHOD_CONTRACT;
@@ -78,16 +77,49 @@ void Disassembler::StaticInitialize()
 #if USE_COREDISTOOLS_DISASSEMBLER
     _ASSERTE(!IsAvailable());
 
-    // TODO: The 'coredistools' library will eventually be part of a NuGet package, need to be able to load
-    // that using appropriate search paths
-    LPCWSTR libraryName = MAKEDLLNAME(W("coredistools"));
-    HMODULE libraryHandle = CLRLoadLibrary(libraryName);
+	LPCWSTR libraryName = MAKEDLLNAME(W("coredistools"));
+  	// Try to load library
+	HMODULE libraryHandle = CLRLoadLibrary(libraryName);
+    
+#if !defined(_WIN32) 
+    if (libraryHandle == nullptr) {
+        // For non-Windows operating systems, search the directory where host program such as corerun
+        // exists.
+
+        // Absolute coredistools library path
+        wchar_t libPath[MAX_LONGPATH];
+        libPath[0] = { '\0' };
+
+        // Discover the path to the host program. All other files are expected to be in the same directory.
+        DWORD thisModuleLength = ::GetModuleFileNameW(nullptr, libPath, MAX_LONGPATH);
+
+        if (thisModuleLength) {            
+            // Search for the last backslash in the host path.
+            for (int lastBackslashIndex = thisModuleLength-1; lastBackslashIndex >= 0; lastBackslashIndex--) {
+                wchar_t ch = libPath[lastBackslashIndex];
+                if (ch == W('/')) {
+                    libPath[lastBackslashIndex+1] = '\0';
+                    break;
+                }
+            }
+
+            // Append library file name
+            LPCWSTR libFileName = MAKEDLLNAME(W("coredistools"));
+            wcscat_s(libPath, MAX_LONGPATH, libFileName);
+
+            // Try to load library
+            libraryName = libPath;
+            libraryHandle = CLRLoadLibrary(libraryName);
+        }
+    }
+#endif
+
     do
     {
         if (libraryHandle == nullptr)
         {
         #ifdef _DEBUG
-            wprintf(W("LoadLibrary failed for '%s': error %u\n"), libraryName, GetLastError());
+            wprintf(W("LoadLibrary failed for '%s': error %u\n"), W("libcoredistools.so"), GetLastError());
         #endif // _DEBUG
             break;
         }
@@ -139,6 +171,7 @@ void Disassembler::StaticInitialize()
 
     CLRFreeLibrary(libraryHandle);
     _ASSERTE(!IsAvailable());
+    
 #endif // USE_COREDISTOOLS_DISASSEMBLER
 }
 
