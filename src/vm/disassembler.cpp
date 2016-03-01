@@ -77,8 +77,6 @@ void Disassembler::StaticInitialize()
 #if USE_COREDISTOOLS_DISASSEMBLER
     _ASSERTE(!IsAvailable());
 
-	LPCWSTR libFileName = MAKEDLLNAME(W("coredistools"));    
-    //size_t libFileNameLen = wcsnlen_s(libFileName, MAX_PATH);
     HMODULE libraryHandle = nullptr;
     PathString libPath;
     DWORD result = WszGetModuleFileName(nullptr, libPath);
@@ -96,6 +94,7 @@ void Disassembler::StaticInitialize()
 #else
     WCHAR delim = W('\\');
 #endif
+    LPCWSTR libFileName = MAKEDLLNAME(W("coredistools"));
     PathString::Iterator iter = libPath.End();
     if (libPath.FindBack(iter, delim)) {
         libPath.Truncate(++iter);
@@ -104,39 +103,6 @@ void Disassembler::StaticInitialize()
 
     LPCWSTR libraryName = libPath.GetUnicode();
     libraryHandle = CLRLoadLibrary(libraryName);
-
-#if 0
-    // Try to load library
-    //HMODULE libraryHandle = CLRLoadLibrary(libraryName);
-    // For non-Windows operating systems, search the directory where host program such as corerun
-    // exists.
-
-    // Absolute coredistools library path
-    
-    // Discover the path to the host program. All other files are expected to be in the same directory.
-    wchar_t hostProgPath[MAX_LONGPATH];
-    DWORD thisModuleLength = ::GetModuleFileNameW(nullptr, hostProgPath, MAX_LONGPATH);
-
-    if (thisModuleLength) {
-        // Search for the last backslash in the host path.
-        for (int lastBackslashIndex = thisModuleLength - 1; lastBackslashIndex >= 0; lastBackslashIndex--) {
-            wchar_t ch = libPath[lastBackslashIndex];
-            if (ch == W('/')) {
-                libPath[lastBackslashIndex + 1] = '\0';
-                break;
-            }
-        }
-
-        // Append library file name
-        LPCWSTR libFileName = MAKEDLLNAME(W("coredistools"));
-        wcscat_s(libPath, MAX_LONGPATH, libFileName);
-
-        // Try to load library
-        libraryName = libPath;
-        libraryHandle = CLRLoadLibrary(libraryName);
-    }
-#endif
-
     do
     {
         if (libraryHandle == nullptr)

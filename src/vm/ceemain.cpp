@@ -989,15 +989,8 @@ void EEStartupHelper(COINITIEE fFlags)
             Disassembler::StaticInitialize();
             if (!Disassembler::IsAvailable())
             {
-#ifdef HAVE_GCCOVER
-#ifdef _DEBUG
                 printf("External disassembler is not available. Disabling GCStress for GCSTRESS_INSTR_JIT and GCSTRESS_INSTR_NGEN.\n");
-#endif // _DEBUG
-                g_pConfig->SetGCStressLevel(
-                    g_pConfig->GetGCStressLevel() & ~(EEConfig::GCSTRESS_INSTR_JIT | EEConfig::GCSTRESS_INSTR_NGEN));
-#endif // HAVE_GCCOVER
-                printf("External disassembler is not available. Disabling GCStress for GCSTRESS_INSTR_JIT and GCSTRESS_INSTR_NGEN.\n");
-                IfFailGo(E_FAIL)
+                IfFailGo(E_FAIL);
             }
         }
 #endif // USE_DISASSEMBLER
