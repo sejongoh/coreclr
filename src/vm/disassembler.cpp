@@ -77,40 +77,63 @@ void Disassembler::StaticInitialize()
 #if USE_COREDISTOOLS_DISASSEMBLER
     _ASSERTE(!IsAvailable());
 
-	LPCWSTR libraryName = MAKEDLLNAME(W("coredistools"));
-  	// Try to load library
-	HMODULE libraryHandle = CLRLoadLibrary(libraryName);
+	LPCWSTR libFileName = MAKEDLLNAME(W("coredistools"));    
+    //size_t libFileNameLen = wcsnlen_s(libFileName, MAX_PATH);
+    HMODULE libraryHandle = nullptr;
+    PathString libPath;
+    DWORD result = WszGetModuleFileName(nullptr, libPath);
+    if (result == 0) {
+#ifdef _DEBUG
+        wprintf(
+            W("GetModuleFileName failed, function 'DisasmInstruction': error %u\n"),
+            GetLastError());
+#endif // _DEBUG
+        return;
+    }
+
+#if defined(FEATURE_PAL)
+    WCHAR delim = W('/');
+#else
+    WCHAR delim = W('\\');
+#endif
+    PathString::Iterator iter = libPath.End();
+    if (libPath.FindBack(iter, delim)) {
+        libPath.Truncate(++iter);
+        libPath.Append(libFileName);
+    }
+
+    LPCWSTR libraryName = libPath.GetUnicode();
+    libraryHandle = CLRLoadLibrary(libraryName);
+
+#if 0
+    // Try to load library
+    //HMODULE libraryHandle = CLRLoadLibrary(libraryName);
+    // For non-Windows operating systems, search the directory where host program such as corerun
+    // exists.
+
+    // Absolute coredistools library path
     
-#if !defined(_WIN32) 
-    if (libraryHandle == nullptr) {
-        // For non-Windows operating systems, search the directory where host program such as corerun
-        // exists.
+    // Discover the path to the host program. All other files are expected to be in the same directory.
+    wchar_t hostProgPath[MAX_LONGPATH];
+    DWORD thisModuleLength = ::GetModuleFileNameW(nullptr, hostProgPath, MAX_LONGPATH);
 
-        // Absolute coredistools library path
-        wchar_t libPath[MAX_LONGPATH];
-        libPath[0] = { '\0' };
-
-        // Discover the path to the host program. All other files are expected to be in the same directory.
-        DWORD thisModuleLength = ::GetModuleFileNameW(nullptr, libPath, MAX_LONGPATH);
-
-        if (thisModuleLength) {            
-            // Search for the last backslash in the host path.
-            for (int lastBackslashIndex = thisModuleLength-1; lastBackslashIndex >= 0; lastBackslashIndex--) {
-                wchar_t ch = libPath[lastBackslashIndex];
-                if (ch == W('/')) {
-                    libPath[lastBackslashIndex+1] = '\0';
-                    break;
-                }
+    if (thisModuleLength) {
+        // Search for the last backslash in the host path.
+        for (int lastBackslashIndex = thisModuleLength - 1; lastBackslashIndex >= 0; lastBackslashIndex--) {
+            wchar_t ch = libPath[lastBackslashIndex];
+            if (ch == W('/')) {
+                libPath[lastBackslashIndex + 1] = '\0';
+                break;
             }
-
-            // Append library file name
-            LPCWSTR libFileName = MAKEDLLNAME(W("coredistools"));
-            wcscat_s(libPath, MAX_LONGPATH, libFileName);
-
-            // Try to load library
-            libraryName = libPath;
-            libraryHandle = CLRLoadLibrary(libraryName);
         }
+
+        // Append library file name
+        LPCWSTR libFileName = MAKEDLLNAME(W("coredistools"));
+        wcscat_s(libPath, MAX_LONGPATH, libFileName);
+
+        // Try to load library
+        libraryName = libPath;
+        libraryHandle = CLRLoadLibrary(libraryName);
     }
 #endif
 
@@ -119,7 +142,7 @@ void Disassembler::StaticInitialize()
         if (libraryHandle == nullptr)
         {
         #ifdef _DEBUG
-            wprintf(W("LoadLibrary failed for '%s': error %u\n"), W("libcoredistools.so"), GetLastError());
+            wprintf(W("LoadLibrary failed for '%s': error %u\n"), libraryName, GetLastError());
         #endif // _DEBUG
             break;
         }
@@ -169,7 +192,6 @@ void Disassembler::StaticInitialize()
         return;
     } while (false);
 
-    CLRFreeLibrary(libraryHandle);
     _ASSERTE(!IsAvailable());
     
 #endif // USE_COREDISTOOLS_DISASSEMBLER
