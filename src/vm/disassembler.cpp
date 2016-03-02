@@ -100,6 +100,9 @@ void Disassembler::StaticInitialize()
         libPath.Truncate(++iter);
         libPath.Append(libFileName);
     }
+    else {
+        _ASSERTE(!"unreachable");
+    }
 
     LPCWSTR libraryName = libPath.GetUnicode();
     libraryHandle = CLRLoadLibrary(libraryName);

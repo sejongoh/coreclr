@@ -91,7 +91,12 @@ echo Downloading CoreDisTools package
 bash -c -x "$dotnetCmd restore $jsonFilePath --source https://dotnet.myget.org/F/dotnet-core/ --packages $packageDir --runtime $rid"
 
 # Get library path
-libPath=`find $packageDir | grep libcoredistools.so`
+libPath=`find $packageDir | grep libcoredistools`
+numLibs=`echo $libPath | wc -l`
+if [ $numLibs -ne 1 ]; then
+    echo 'Multiple libraries found: ' $libPath
+    exit 1
+fi
 if [ ! -e $libPath ]; then
     echo 'Failed to locate the downloaded library'
     exit 1
