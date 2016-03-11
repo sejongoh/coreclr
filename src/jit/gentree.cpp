@@ -9954,7 +9954,21 @@ CHK_OVF:
                 case TYP_DOUBLE:
                     if ((tree->gtFlags & GTF_UNSIGNED) && lval1 < 0)
                     {
-                        d1 = (double) (unsigned __int64) lval1;
+#if defined(_TARGET_XARCH_) && !defined(_MSC_VER)
+                        // RyuJIT codegen and clang (or gcc) may produce different results for casting uint64 to 
+                        // double, and the clang result is more accurate. For example,
+                        //    1) (double)0x84595161401484A0UL --> 43e08b2a2c280290  (RyuJIT codegen or VC++)
+                        //    2) (double)0x84595161401484A0UL --> 43e08b2a2c280291  (clang or gcc)
+                        // If the folding optimization below is implemented by simple casting of (double)(uint64)lval1
+                        // and it is compiled by clang, casting result can be inconsistent, depending on whether
+                        // the folding optimization is triggered or the codegen generates instructions for casting.                        //
+                        // The current solution is to force the same math as the codegen does, so that casting
+                        // result is always consistent.
+                        d1 = (double)(__int64)lval1;
+                        d1 += 0x1p64; 
+#else
+                        d1 = (double)(unsigned __int64)lval1;
+#endif
                     }
                     else
                     {
