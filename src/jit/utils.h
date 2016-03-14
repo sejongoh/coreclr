@@ -510,4 +510,13 @@ struct ListNode
     }
 };
 
+/*****************************************************************************
+* Floating point utility class to contains 
+*/
+class FloatingPointUtils {
+public:
+    static double convertUint64ToDouble(unsigned __int64 u64);
+    static unsigned __int64 convertDoubleToUint64(double d);
+};
+
 #endif // _UTILS_H_

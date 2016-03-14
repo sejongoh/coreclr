@@ -1544,3 +1544,53 @@ unsigned            CountDigits(unsigned num, unsigned base /* = 10 */)
 }
 
 #endif // DEBUG
+
+
+double FloatingPointUtils::convertUint64ToDouble(unsigned __int64 uIntVal) {
+    double d;
+#if defined(_TARGET_XARCH_) && !defined(_MSC_VER)
+    // RyuJIT codegen and clang (or gcc) may produce different results for casting uint64 to 
+    // double, and the clang result is more accurate. For example,
+    //    1) (double)0x84595161401484A0UL --> 43e08b2a2c280290  (RyuJIT codegen or VC++)
+    //    2) (double)0x84595161401484A0UL --> 43e08b2a2c280291  (clang or gcc)
+    // If the folding optimization below is implemented by simple casting of (double)(uint64)lval1
+    // and it is compiled by clang, casting result can be inconsistent, depending on whether
+    // the folding optimization is triggered or the codegen generates instructions for casting.                        //
+    // The current solution is to force the same math as the codegen does, so that casting
+    // result is always consistent.
+    d = (double)(__int64)uIntVal;
+    d += 0x1p64;
+#else
+    d = (double)(unsigned __int64)uIntVal;
+#endif
+    return d;
+}
+
+
+unsigned __int64 FloatingPointUtils::convertDoubleToUint64(double d) {
+    unsigned __int64 u64;
+    if (d >= 0.0)
+    {
+        // Work around a C++ issue where it doesn't properly convert large positive doubles
+        const double two63 = 2147483648.0 * 4294967296.0;
+        if (d < two63) {
+            u64 = UINT64(d);
+        }
+        else {
+            // subtract 0x8000000000000000, do the convert then add it back again
+            u64 = INT64(d - two63) + I64(0x8000000000000000);
+        }
+        return u64;
+    }
+
+    // This double cast to account for an ECMA spec hole.
+    // When converting from a double to an unsigned the ECMA
+    // spec states that a conforming implementation should 
+    // "truncate to zero." However that doesn't make much sense
+    // when the double in question is negative and the target
+    // is unsigned. gcc converts a negative double to zero when
+    // cast to an unsigned. To make gcc conform to MSVC behavior
+    // this cast is necessary.
+    u64 = UINT64(INT64(d));     
+    return u64;
+}
