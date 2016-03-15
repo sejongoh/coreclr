@@ -9954,6 +9954,7 @@ CHK_OVF:
                 case TYP_DOUBLE:
                     if ((tree->gtFlags & GTF_UNSIGNED) && lval1 < 0)
                     {
+                        return tree;
                         d1 = FloatingPointUtils::convertUInt64ToDouble((unsigned __int64)lval1);
                     }
                     else
