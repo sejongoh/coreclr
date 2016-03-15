@@ -1546,7 +1546,7 @@ unsigned            CountDigits(unsigned num, unsigned base /* = 10 */)
 #endif // DEBUG
 
 
-double FloatingPointUtils::convertUint64ToDouble(unsigned __int64 uIntVal) {
+double FloatingPointUtils::convertUInt64ToDouble(unsigned __int64 uIntVal) {
     double d;
 #if defined(_TARGET_XARCH_) && !defined(_MSC_VER)
     // RyuJIT codegen and clang (or gcc) may produce different results for casting uint64 to 
@@ -1566,8 +1566,12 @@ double FloatingPointUtils::convertUint64ToDouble(unsigned __int64 uIntVal) {
     return d;
 }
 
+float FloatingPointUtils::convertUInt64ToFloat(unsigned __int64 u64) {
+    double d = convertUInt64ToDouble(u64);
+    return (float)d;
+}
 
-unsigned __int64 FloatingPointUtils::convertDoubleToUint64(double d) {
+unsigned __int64 FloatingPointUtils::convertDoubleToUInt64(double d) {
     unsigned __int64 u64;
     if (d >= 0.0)
     {

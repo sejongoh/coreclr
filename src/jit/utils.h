@@ -515,8 +515,9 @@ struct ListNode
 */
 class FloatingPointUtils {
 public:
-    static double convertUint64ToDouble(unsigned __int64 u64);
-    static unsigned __int64 convertDoubleToUint64(double d);
+    static double convertUInt64ToDouble(unsigned __int64 u64);
+    static float convertUInt64ToFloat(unsigned __int64 u64);
+    static unsigned __int64 convertDoubleToUInt64(double d);
 };
 
 #endif // _UTILS_H_

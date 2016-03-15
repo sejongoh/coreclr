@@ -9954,7 +9954,7 @@ CHK_OVF:
                 case TYP_DOUBLE:
                     if ((tree->gtFlags & GTF_UNSIGNED) && lval1 < 0)
                     {
-                        d1 = FloatingPointUtils::convertUint64ToDouble((unsigned __int64)lval1);
+                        d1 = FloatingPointUtils::convertUInt64ToDouble((unsigned __int64)lval1);
                     }
                     else
                     {
@@ -10074,7 +10074,7 @@ CHK_OVF:
                     lval1 = INT64(d1);      goto CNS_LONG;
 
                 case TYP_ULONG:
-                    lval1 = FloatingPointUtils::convertDoubleToUint64(d1);
+                    lval1 = FloatingPointUtils::convertDoubleToUInt64(d1);
                     goto CNS_LONG;
 
                 case TYP_FLOAT:
